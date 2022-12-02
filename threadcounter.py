@@ -8,13 +8,17 @@
 import cv2 as cv
 
 from tkinter import *
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 from PIL import ImageTk, Image
 
 import os
 
-
+## Any function that returns an image and a text can be passed to compute function
+## so we can customize which algorithm, from the GUI. image return value should
+## contain preprocessed image.
+##
+## This is a dummy function. replace its usages by actual algorithms.
 def dummyAlgorithm(image: cv.Mat):
     return image, str(image.size)
 
@@ -54,6 +58,10 @@ def main():
     def chooseFile():
         nonlocal chooseFileButton, path, filePathLabel, unselectButton, imageDisplay
         path = filedialog.askopenfilename()
+        if not path:
+            messagebox.showwarning(title="Error", message="Please select a file!")
+            path = None
+            return
         chooseFileButton.grid_remove()
         filePathLabel = ttk.Label(frame, text=path)
         filePathLabel.grid(row=0, column=0)
@@ -67,8 +75,14 @@ def main():
             "iterative": dummyAlgorithm,
         }[algorithm]
         ## TODO: If path is not set, show error
+        if path is None:
+            messagebox.showwarning(title="Error", message="Please select a file!")
+            return
+        for widget in [imageDisplay, resultDisplay]:
+            if widget:
+                widget.grid_remove()
         preprocessedImage, textResult = fn(cv.imread(path))
-        imageDisplay = ttk.Label(frame, image=getTkImage(preprocessedImage))
+        imageDisplay = ttk.Label(frame, image=getTkImage(preprocessedImage), width=100)
         imageDisplay.grid(row=5, column=0)
         resultDisplay = ttk.Label(frame, text=textResult)
         resultDisplay.grid(row=6, column=0)
