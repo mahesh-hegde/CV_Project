@@ -14,6 +14,11 @@ from PIL import ImageTk, Image
 
 import os
 
+
+def dummyAlgorithm(image: cv.Mat):
+    return image, str(image.size)
+
+
 ## Convert OpenCV image into something displayable by tkinter
 def getTkImage(image: cv.Mat):
     global imgtk
@@ -22,10 +27,6 @@ def getTkImage(image: cv.Mat):
     im = Image.fromarray(rgb, "RGB")
     imgtk = ImageTk.PhotoImage(image=im)
     return imgtk
-
-
-def compute(algorithm):
-    print(algorithm)
 
 
 def main():
@@ -37,6 +38,7 @@ def main():
     filePathLabel = None
     unselectButton = None
     imageDisplay = None
+    resultDisplay = None
 
     def unselect():
         nonlocal chooseFileButton, path, filePathLabel, unselectButton
@@ -45,7 +47,7 @@ def main():
             frame, text="Please choose an image file", command=chooseFile
         )
         chooseFileButton.grid(row=0, column=0)
-        for widget in [filePathLabel, unselectButton, imageDisplay]:
+        for widget in [filePathLabel, unselectButton, imageDisplay, resultDisplay]:
             if widget:
                 widget.grid_remove()
 
@@ -57,26 +59,35 @@ def main():
         filePathLabel.grid(row=0, column=0)
         unselectButton = ttk.Button(frame, text="Unselect", command=unselect)
         unselectButton.grid(row=0, column=1)
-        tkImage = getTkImage(cv.imread(path))
-        print(tkImage)
-        imageDisplay = Label(
-            frame, image=getTkImage(cv.imread(path)), width=200, height=100
-        )
-        imageDisplay.grid(row=3, column=0)
+
+    def compute(algorithm: str):
+        nonlocal imageDisplay, resultDisplay
+        fn: function[tuple[cv.Mat, str], [cv.Mat]] = {
+            "canny": dummyAlgorithm,
+            "iterative": dummyAlgorithm,
+        }[algorithm]
+        ## TODO: If path is not set, show error
+        preprocessedImage, textResult = fn(cv.imread(path))
+        imageDisplay = ttk.Label(frame, image=getTkImage(preprocessedImage))
+        imageDisplay.grid(row=5, column=0)
+        resultDisplay = ttk.Label(frame, text=textResult)
+        resultDisplay.grid(row=6, column=0)
 
     unselect()
 
-    radioVar = StringVar(frame, "1")
-    ttk.Radiobutton(frame, text="Algorithm 1", variable=radioVar, value="1").grid(
-        row=1, column=0
-    )
-    ttk.Radiobutton(frame, text="Algorithm 2", variable=radioVar, value="2").grid(
-        row=2, column=0
-    )
+    radioVar = StringVar(frame, "canny")
+    ttk.Radiobutton(
+        frame, text="Canny edge detector", variable=radioVar, value="canny"
+    ).grid(row=1, column=0)
+    ttk.Radiobutton(
+        frame, text="Iterative counting", variable=radioVar, value="iterative"
+    ).grid(row=2, column=0)
 
     ttk.Button(
         frame, text="Compute", command=lambda: compute(algorithm=radioVar.get())
-    ).grid(row=4, column=0)
+    ).grid(row=3, column=0)
+
+    ttk.Separator().grid(row=4, column=0)
 
     root.mainloop()
 
