@@ -75,7 +75,6 @@ def main():
             "canny": canny_edge.cannyEdgeEstimate,
             "iterative": iterative_counter.iterativeCounterEstimate,
         }[algorithm]
-        ## TODO: If path is not set, show error
         if path is None:
             messagebox.showwarning(title="Error", message="Please select a file!")
             return
