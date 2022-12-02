@@ -12,22 +12,23 @@ from tkinter import ttk, filedialog, messagebox
 
 from PIL import ImageTk, Image
 
-import os
+import canny_edge
+import iterative_counter
 
 ## Any function that returns an image and a text can be passed to compute function
 ## so we can customize which algorithm, from the GUI. image return value should
 ## contain preprocessed image.
 ##
 ## This is a dummy function. replace its usages by actual algorithms.
-def dummyAlgorithm(image: cv.Mat):
+def dummyAlgorithm(path: str):
+    image = cv.imread(path)
     return image, str(image.size)
 
 
 ## Convert OpenCV image into something displayable by tkinter
 def getTkImage(image: cv.Mat):
     global imgtk
-    b, g, r = cv.split(image)
-    rgb = cv.merge((r, g, b))
+    rgb = cv.cvtColor(image, cv.COLOR_BGR2RGB)
     im = Image.fromarray(rgb, "RGB")
     imgtk = ImageTk.PhotoImage(image=im)
     return imgtk
@@ -70,9 +71,9 @@ def main():
 
     def compute(algorithm: str):
         nonlocal imageDisplay, resultDisplay
-        fn: function[tuple[cv.Mat, str], [cv.Mat]] = {
-            "canny": dummyAlgorithm,
-            "iterative": dummyAlgorithm,
+        fn: function[tuple[cv.Mat, str], [str]] = {
+            "canny": canny_edge.cannyEdgeEstimate,
+            "iterative": iterative_counter.iterativeCounterEstimate,
         }[algorithm]
         ## TODO: If path is not set, show error
         if path is None:
@@ -81,7 +82,7 @@ def main():
         for widget in [imageDisplay, resultDisplay]:
             if widget:
                 widget.grid_remove()
-        preprocessedImage, textResult = fn(cv.imread(path))
+        preprocessedImage, textResult = fn(path)
         imageDisplay = ttk.Label(frame, image=getTkImage(preprocessedImage), width=100)
         imageDisplay.grid(row=5, column=0)
         resultDisplay = ttk.Label(frame, text=textResult)
